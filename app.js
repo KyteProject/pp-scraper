@@ -6,9 +6,10 @@ import puppeteer from 'puppeteer';
 ( async() => {
   const branchExclusion = [ 'All', 'Cornerstone Wide', 'Operational Support', 'Training Academy' ],
     teamExclusion = [ 'All' ],
+    allowedShiftTypes = [ 'Support', 'Support Share-Lead' ],
     date = '08/04/2019',
     data = [],
-    browser = await puppeteer.launch( { headless: false, slowMo: 50 } ),
+    browser = await puppeteer.launch( { headless: false } ),
     page = await browser.newPage();
 
   await page.setViewport( { width: 1024, height: 738 } );
@@ -78,16 +79,51 @@ import puppeteer from 'puppeteer';
       return options;
     }, teamExclusion );
 
-    // TODO loop through teams
-    await popup.select( '#ddlBranchArea', teams[ 0 ].value );
-    await popup.waitFor( 1500 );
+    for ( let x = 0; x < teams.length; x++ ) {
+      await popup.select( '#ddlBranchArea', teams[ x ].value );
+      await popup.waitFor( 1500 );
+      await popup.waitForSelector( '#PlanningServiceTypeChartContainer' );
+      const aHandle = await popup.evaluateHandle( () => window.Highcharts.charts[ 1 ].series[ 0 ].data ),
+        handleProps = await aHandle.getProperties(),
+        propsSize = handleProps.size;
 
-    data.push( {
-      branch: branches[ 0 ].name,
-      service: teams[ 0 ].name,
-      generated: false
-    } );
+      for ( let y = 0; y < propsSize; y++ ) {
+        const props = await aHandle.getProperty( y.toString() );
+
+        let type = await props.getProperty( 'category' ),
+          total = await props.getProperty( 'total' ),
+          percentage = await props.getProperty( 'percentage' );
+
+        type = await type.jsonValue();
+        total = await total.jsonValue();
+        percentage = await percentage.jsonValue();
+
+        const unallocated = Math.round( total * percentage / 100 ),
+          allocated = total - unallocated;
+
+        console.log( props );
+      }
+    }
   }
 
-  console.log( 'beep' );
+  // const jsHandle = await popup.evaluateHandle( () => {
+  //     const chart = window.Highcharts.charts[ 1 ].series[ 0 ].data;
+
+  //     console.log( chart );
+  //     return chart;
+  //   } ),
+  //   chartData = await popup.evaluate( async( jsHandle ) => {
+  //     jsHandle.forEach.forEach( ( serviceType ) => {
+  //       console.log( `${serviceType.category}: ${serviceType.total} ${serviceType.percentage}%` );
+
+  //       // if ( allowedShiftTypes.includes( serviceType.category ) ) {
+  //       //   const shiftData = {
+  //       //     type: serviceType.category,
+  //       //     unallocated: Math.round( serviceType.total * serviceType.percentage / 100 )
+  //       //   };
+
+  //       //   shiftData.allocated = serviceType.total - shiftData.unallocated;
+  //       // }
+  //     } );
+  //   }, jsHandle );
 } )();

@@ -1,0 +1,29 @@
+{
+	"name": "pp-scraper",
+	"version": "1.0.0",
+	"main": "app.js",
+	"author": "Daniel Smith",
+	"license": "MIT",
+	"scripts": {
+		"test": "eslint .",
+		"lint": "eslint --fix .",
+		"start": "nodemon --exec yarn babel-node app.js",
+		"debug": "nodemon --exec yarn babel-node --inspect app.js"
+	},
+	"engines": {
+		"node": ">=8"
+	},
+	"dependencies": {
+		"puppeteer": "^1.14.0"
+	},
+	"devDependencies": {
+		"@babel/cli": "^7.4.3",
+		"@babel/core": "^7.4.3",
+		"@babel/node": "^7.2.2",
+		"@babel/preset-env": "^7.4.3",
+		"babel-eslint": "^10.0.1",
+		"eslint": "^5.16.0",
+		"eslint-plugin-import": "^2.17.2",
+		"nodemon": "^1.18.11"
+	}
+}

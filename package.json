@@ -8,12 +8,13 @@
 		"test": "eslint .",
 		"lint": "eslint --fix .",
 		"start": "nodemon --exec yarn babel-node app.js",
-		"debug": "nodemon --exec yarn babel-node --inspect app.js"
+		"dev": "nodemon --exec yarn babel-node --inspect app.js"
 	},
 	"engines": {
 		"node": ">=8"
 	},
 	"dependencies": {
+		"dotenv": "^7.0.0",
 		"puppeteer": "^1.14.0"
 	},
 	"devDependencies": {

@@ -1,4 +1,3 @@
-# Logs
 logs
 *.log
 npm-debug.log*
@@ -17,6 +16,7 @@ commands/wolke/test.js
 .env
 credentials.json
 token.json
+excludedTeams.js
 
 # Runtime data
 pids

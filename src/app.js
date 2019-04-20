@@ -182,10 +182,8 @@ import { createObjectCsvWriter } from 'csv-writer';
     console.log( 'Writing csv file: ./out.csv' );
 
     csvWriter.writeRecords( data ).then( () => {
-      console.log( '...Done' );
+      console.timeEnd( 'Completed in' );
     } );
-
-    console.timeEnd( 'Completed in' );
   } catch ( err ) {
     console.log( err );
   }

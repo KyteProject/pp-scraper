@@ -2,13 +2,24 @@
 /* eslint-disable no-loop-func */
 require( 'dotenv' ).config();
 import puppeteer from 'puppeteer';
+import { createObjectCsvWriter } from 'csv-writer';
 
 ( async() => {
-  const branchExclusion = [ 'All', 'Cornerstone Wide', 'Operational Support', 'Training Academy' ],
+  const csvWriter = createObjectCsvWriter( {
+      path: 'out.csv',
+      header: [
+        { id: 'branch', title: 'Branch' },
+        { id: 'team', title: 'Service/Team' },
+        { id: 'generated', title: 'Generated' },
+        { id: 'allocated', title: 'Allocated' },
+        { id: 'unallocated', title: 'Unallocated' }
+      ]
+    } ),
+    data = [],
+    date = '08/04/2019',
+    branchExclusion = [ 'All', 'Cornerstone Wide', 'Operational Support', 'Training Academy' ],
     teamExclusion = require( './excludedTeams.js' ),
     allowedShiftTypes = [ 'Support', 'Support Share-Lead' ],
-    date = '08/04/2019',
-    data = [],
     browser = await puppeteer.launch( { headless: false } ),
     page = await browser.newPage();
 
@@ -74,7 +85,7 @@ import puppeteer from 'puppeteer';
     await page.select( '#ddlStatus', '1' );
 
     // Loop through branches
-    for ( let i = 0; i < branches.length; i++ ) {
+    for ( let i = 0; i < 2; i++ ) {
       const branch = branches[ i ];
 
       await page.select( '#ddlBranch', branch.value );
@@ -150,13 +161,24 @@ import puppeteer from 'puppeteer';
           }
         }
 
-        await page.waitFor( 500 );
+        await page.waitFor( 1000 );
         data.push( entry );
         console.log( 'Pushing results: ', entry );
       }
 
       await page.waitFor( 1000 );
     }
+  } catch ( err ) {
+    console.log( err );
+  }
+
+  // Write Data
+  try {
+    console.log( 'Writing csv file: ./out.csv' );
+
+    csvWriter.writeRecords( data ).then( () => {
+      console.log( '...Done' );
+    } );
   } catch ( err ) {
     console.log( err );
   }

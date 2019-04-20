@@ -1,5 +1,3 @@
-/* eslint-disable no-shadow */
-/* eslint-disable no-loop-func */
 require( 'dotenv' ).config();
 import puppeteer from 'puppeteer';
 import { createObjectCsvWriter } from 'csv-writer';

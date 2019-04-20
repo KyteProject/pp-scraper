@@ -20,7 +20,11 @@ import { createObjectCsvWriter } from 'csv-writer';
     branchExclusion = [ 'All', 'Cornerstone Wide', 'Operational Support', 'Training Academy' ],
     teamExclusion = require( './excludedTeams.js' ),
     allowedShiftTypes = [ 'Support', 'Support Share-Lead' ],
-    browser = await puppeteer.launch( { headless: false } ),
+    browser = await puppeteer.launch( {
+      headless: false,
+      ignoreHTTPSErrors: true,
+      args: [ `--window-size=${1024},${768}` ]
+    } ),
     page = await browser.newPage();
 
   try {
@@ -28,7 +32,7 @@ import { createObjectCsvWriter } from 'csv-writer';
     await page.goto( 'https://www.peopleplanner.biz/Security/Login.aspx' );
     await page.type( '#txtAccountID', process.env.DB );
     await page.click( '#btnLogin' );
-    await page.waitFor( 1000 );
+    await page.waitFor( 750 );
     await page.click( '#btnLogin' );
   } catch ( err ) {
     console.log( err );
@@ -85,26 +89,24 @@ import { createObjectCsvWriter } from 'csv-writer';
     await page.select( '#ddlStatus', '1' );
 
     // Loop through branches
-    for ( let i = 0; i < 1; i++ ) {
+    for ( let i = 0; i < branches.length; i++ ) {
       const branch = branches[ i ];
 
       await page.select( '#ddlBranch', branch.value );
       await page.waitFor( 1000 );
       await page.select( '#ddlBranch', branch.value );
-      await page.waitFor( 3000 );
+      await page.waitFor( 2000 );
       console.log( `Switched to branch: ${branch.name} (${i + 1} of ${branches.length})` );
 
-      const teams = await page.evaluate( ( teamExclusion ) => {
+      const teams = await page.evaluate( () => {
         const options = [];
 
-        document.querySelectorAll( '#ddlBranchArea option' ).forEach( ( opt ) => {
-          if ( !teamExclusion.list.includes( opt.textContent ) ) {
-            options.push( { name: opt.textContent, value: opt.value } );
-          }
-        } );
+        document
+          .querySelectorAll( '#ddlBranchArea option' )
+          .forEach( ( opt ) => options.push( { name: opt.textContent, value: opt.value } ) );
 
-        return options;
-      }, teamExclusion );
+        return options.filter( ( t ) => t.name !== 'All' );
+      } );
 
       // loop through teams
       for ( let x = 0; x < teams.length; x++ ) {
@@ -112,7 +114,7 @@ import { createObjectCsvWriter } from 'csv-writer';
           entry = {
             branch: branch.name,
             team: team.name,
-            generated: true,
+            generated: 'yes',
             allocated: 0,
             unallocated: 0
           };
@@ -137,6 +139,11 @@ import { createObjectCsvWriter } from 'csv-writer';
 
         // loop though chart props
         for ( let y = 0; y < props.size; y++ ) {
+          if ( teamExclusion.list.includes( team.name ) ) {
+            entry.generated = 'Exempt';
+            break;
+          }
+
           const props = await aHandle.getProperty( y.toString() );
 
           let type = await props.getProperty( 'category' ),
@@ -148,7 +155,7 @@ import { createObjectCsvWriter } from 'csv-writer';
           percentage = await percentage.jsonValue();
 
           if ( type === 0 ) {
-            entry.generated = false;
+            entry.generated = 'no';
             break;
           }
 
@@ -166,7 +173,7 @@ import { createObjectCsvWriter } from 'csv-writer';
         console.log( 'Pushing results: ', entry );
       }
 
-      await page.waitFor( 1000 );
+      // await page.waitFor( 1000 );
     }
   } catch ( err ) {
     console.log( err );

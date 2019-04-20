@@ -172,8 +172,6 @@ import { createObjectCsvWriter } from 'csv-writer';
         data.push( entry );
         console.log( 'Pushing results: ', entry );
       }
-
-      // await page.waitFor( 1000 );
     }
   } catch ( err ) {
     console.log( err );

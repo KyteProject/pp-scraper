@@ -73,11 +73,15 @@ import puppeteer from 'puppeteer';
     await page.type( '#txtFromDate', date );
     await page.select( '#ddlStatus', '1' );
 
+    // Loop through branches
     for ( let i = 0; i < branches.length; i++ ) {
-      await page.select( '#ddlBranch', branches[ i ].value );
+      const branch = branches[ i ];
+
+      await page.select( '#ddlBranch', branch.value );
       await page.waitFor( 1000 );
-      await page.select( '#ddlBranch', branches[ i ].value );
+      await page.select( '#ddlBranch', branch.value );
       await page.waitFor( 3000 );
+      console.log( `Switched to branch: ${branch.name} (${i + 1} of ${branches.length})` );
 
       const teams = await page.evaluate( ( teamExclusion ) => {
         const options = [];
@@ -91,11 +95,22 @@ import puppeteer from 'puppeteer';
         return options;
       }, teamExclusion );
 
+      // loop through teams
       for ( let x = 0; x < teams.length; x++ ) {
-        await page.select( '#ddlBranchArea', teams[ x ].value );
+        const team = teams[ x ],
+          entry = {
+            branch: branch.name,
+            team: team.name,
+            generated: true,
+            allocated: 0,
+            unallocated: 0
+          };
+
+        await page.select( '#ddlBranchArea', team.value );
         await page.waitFor( 1500 );
-        await page.select( '#ddlBranchArea', teams[ x ].value );
+        await page.select( '#ddlBranchArea', team.value );
         await page.waitForSelector( '#PlanningServiceTypeChartContainer' );
+        console.log( `Switched to team: ${team.name} (${x + 1} of ${teams.length})` );
 
         const index = await page.evaluate( () => {
             return parseInt(
@@ -109,6 +124,7 @@ import puppeteer from 'puppeteer';
           }, index ),
           props = await aHandle.getProperties();
 
+        // loop though chart props
         for ( let y = 0; y < props.size; y++ ) {
           const props = await aHandle.getProperty( y.toString() );
 
@@ -120,14 +136,26 @@ import puppeteer from 'puppeteer';
           total = await total.jsonValue();
           percentage = await percentage.jsonValue();
 
-          const unallocated = Math.round( total * percentage / 100 ),
-            allocated = total - unallocated;
+          if ( type === 0 ) {
+            entry.generated = false;
+            break;
+          }
 
-          // filter only support types
-          // sum
-          // push data to global write object
+          if ( allowedShiftTypes.includes( type ) ) {
+            const unallocated = percentage ? Math.round( total * percentage / 100 ) : 0,
+              allocated = percentage !== 100 ? total - entry.unallocated : 0;
+
+            entry.unallocated += unallocated;
+            entry.allocated += allocated;
+          }
         }
+
+        await page.waitFor( 500 );
+        data.push( entry );
+        console.log( 'Pushing results: ', entry );
       }
+
+      await page.waitFor( 1000 );
     }
   } catch ( err ) {
     console.log( err );

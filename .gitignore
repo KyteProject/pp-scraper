@@ -17,6 +17,7 @@ commands/wolke/test.js
 credentials.json
 token.json
 excludedTeams.js
+out.csv
 
 # Runtime data
 pids

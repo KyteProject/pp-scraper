@@ -85,7 +85,7 @@ import { createObjectCsvWriter } from 'csv-writer';
     await page.select( '#ddlStatus', '1' );
 
     // Loop through branches
-    for ( let i = 0; i < 2; i++ ) {
+    for ( let i = 0; i < 1; i++ ) {
       const branch = branches[ i ];
 
       await page.select( '#ddlBranch', branch.value );
@@ -154,7 +154,7 @@ import { createObjectCsvWriter } from 'csv-writer';
 
           if ( allowedShiftTypes.includes( type ) ) {
             const unallocated = percentage ? Math.round( total * percentage / 100 ) : 0,
-              allocated = percentage !== 100 ? total - entry.unallocated : 0;
+              allocated = percentage !== 100 ? total - unallocated : 0;
 
             entry.unallocated += unallocated;
             entry.allocated += allocated;

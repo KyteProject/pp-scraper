@@ -27,6 +27,8 @@ import { createObjectCsvWriter } from 'csv-writer';
     } ),
     page = await browser.newPage();
 
+  console.time( 'Completed in' );
+
   try {
     await page.setViewport( { width: 1024, height: 738 } );
     await page.goto( 'https://www.peopleplanner.biz/Security/Login.aspx' );
@@ -184,6 +186,8 @@ import { createObjectCsvWriter } from 'csv-writer';
     csvWriter.writeRecords( data ).then( () => {
       console.log( '...Done' );
     } );
+
+    console.timeEnd( 'Completed in' );
   } catch ( err ) {
     console.log( err );
   }

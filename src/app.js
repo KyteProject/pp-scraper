@@ -14,12 +14,12 @@ import { createObjectCsvWriter } from 'csv-writer';
       ]
     } ),
     data = [],
-    date = '08/04/2019',
+    date = '27/05/2019',
     branchExclusion = [ 'All', 'Cornerstone Wide', 'Operational Support', 'Training Academy' ],
     teamExclusion = require( './excludedTeams.js' ),
     allowedShiftTypes = [ 'Support', 'Support Share-Lead' ],
     browser = await puppeteer.launch( {
-      headless: false,
+      headless: true,
       ignoreHTTPSErrors: true,
       args: [ `--window-size=${1024},${768}` ]
     } ),
@@ -52,6 +52,7 @@ import { createObjectCsvWriter } from 'csv-writer';
     await popup.type( '#txtUserCode', process.env.USER );
     await popup.type( '#txtUserPassword', process.env.PASSWORD );
     await popup.click( '#btnLogin' );
+    await popup.waitForNavigation( { waitUntil: 'networkidle0' } );
     await popup.waitForSelector( '#Header_RadTabStrip1_ctl04' );
     await popup.click( '#Header_RadTabStrip1_ctl04' );
     await popup.waitForSelector( '#ifrmDetail' );
@@ -87,21 +88,26 @@ import { createObjectCsvWriter } from 'csv-writer';
 
     await page.type( '#txtFromDate', date );
     await page.select( '#ddlStatus', '1' );
+    await page.waitForSelector( '#ProgressIndicator', { visible: true } );
+    await page.waitForSelector( '#ProgressIndicator', { hidden: true } );
+    console.log( 'Date and status updated.' );
 
     // Loop through branches
     for ( let i = 0; i < branches.length; i++ ) {
       const branch = branches[ i ];
 
+      await page.waitForSelector( '#ddlBranch' );
       await page.select( '#ddlBranch', branch.value );
-      await page.waitFor( 1000 );
+      await page.waitFor( 500 );
       await page.select( '#ddlBranch', branch.value );
-      await page.waitFor( 2000 );
+      await page.waitFor( 3000 );
+      await page.waitForSelector( '#ProgressIndicator', { hidden: true } );
       console.log( `Switched to branch: ${branch.name} (${i + 1} of ${branches.length})` );
 
-      const teams = await page.evaluate( () => {
+      const teams = await page.evaluate( async() => {
         const options = [];
 
-        document
+        await document
           .querySelectorAll( '#ddlBranchArea option' )
           .forEach( ( opt ) => options.push( { name: opt.textContent, value: opt.value } ) );
 
@@ -119,9 +125,16 @@ import { createObjectCsvWriter } from 'csv-writer';
             unallocated: 0
           };
 
+        await page.waitForSelector( '#ddlBranchArea' );
         await page.select( '#ddlBranchArea', team.value );
-        await page.waitFor( 1500 );
+        await page.waitFor( 500 );
         await page.select( '#ddlBranchArea', team.value );
+        await page.waitFor( 500 );
+        await page.select( '#ddlStatus', '2' );
+        await page.waitFor( 500 );
+        await page.select( '#ddlStatus', '1' );
+        await page.waitFor( 5000 );
+        await page.waitForSelector( '#ProgressIndicator', { hidden: true } );
         await page.waitForSelector( '#PlanningServiceTypeChartContainer' );
         console.log( `Switched to team: ${team.name} (${x + 1} of ${teams.length})` );
 
@@ -169,7 +182,7 @@ import { createObjectCsvWriter } from 'csv-writer';
         }
 
         await page.waitFor( 1000 );
-        data.push( entry );
+        await data.push( entry );
         console.log( 'Pushing results: ', entry );
       }
     }

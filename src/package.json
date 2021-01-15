@@ -8,6 +8,7 @@
 		"test": "eslint .",
 		"lint": "eslint --fix .",
 		"start": "nodemon --exec yarn babel-node app.js",
+		"rost": "nodemon --exec yarn babel-node rostered.js",
 		"dev": "nodemon --exec yarn babel-node --inspect app.js"
 	},
 	"engines": {
